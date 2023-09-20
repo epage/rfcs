@@ -1,97 +1,175 @@
-- Feature Name: (fill me in with a unique ident, `my_awesome_feature`)
-- Start Date: (fill me in with today's date, YYYY-MM-DD)
+- Feature Name: `global-features`
+- Start Date: 2023-09-20
 - RFC PR: [rust-lang/rfcs#0000](https://github.com/rust-lang/rfcs/pull/0000)
 - Rust Issue: [rust-lang/rust#0000](https://github.com/rust-lang/rust/issues/0000)
 
 # Summary
 [summary]: #summary
 
-One paragraph explanation of the feature.
+Cargo [features](https://doc.rust-lang.org/cargo/reference/features.html)
+are targeted at direct dependents while some decisions need to be made by the top-level crate (usually a `[[bin]]`).
+This is currently worked around by tunneling features up or relying on environment variables.
+
+This RFC proposes an alternative to features called `globals` that are targeted
+at decisions that affect the entire final artifact.
 
 # Motivation
 [motivation]: #motivation
 
+Use cases
+- An crate author offers optional optimizations, like using `parking_lot`
+  - Currently solved by using a feature like in
+    [tokio](https://github.com/tokio-rs/tokio/blob/ad7f988da377c365cacb5ca24d044a9be5de5889/tokio/Cargo.toml#L100)
+  - This requires callers to either enable it directly, re-export the feature, or have applications directly depend on `tokio` and enable it.
+- `-sys` crates need to make the decision of whether to statically link a vendored version of the source of dynamically link against a system library.
+  - Currently this is solved by a variety of means, usually by dynamically linking if the system library is available and then falling back to the vendored copy unless a vendored feature is enabled.
+  - This requires callers to either enable it directly, re-export the feature, or have applications directly depend on the `-sys` crate and enable it.
+  - To properly represent this, we need three states: "dynamic", "static", "auto"
+  - See also [Internals: Pre-RFC Cargo features for configuring sys crates](https://internals.rust-lang.org/t/pre-rfc-cargo-features-for-configuring-sys-crates/12431)
+- Enable `alloc` or `std` features across the stack ([rust-lang/cargo#2593](https://github.com/rust-lang/cargo/issues/2593#issuecomment-220474831))
+- Multiple backends
+  - flate2 has [multiple backends](https://github.com/rust-lang/flate2-rs/blob/f62ff42615861f1d890160c5f77647466505eac0/Cargo.toml#L33C1-L33C1)
+  - Inkwell supports [multiple LLVM backends](https://github.com/TheDan64/inkwell)
+  - [mlua](https://github.com/khvzak/mlua) supports multiple backends and Lua versions
+  - async-std vs tokio runtimes
+- Module-level parameters
+  - Inline-size control in [kstring](https://docs.rs/crate/kstring/2.0.0/features)
+
 Why are we doing this? What use cases does it support? What is the expected outcome?
+
+See also
+- [rust-lang/cargo#9094](https://github.com/rust-lang/cargo/issues/9094)
+- [rust-lang/cargo#1555](https://github.com/rust-lang/cargo/issues/1555)
+- [rust-lang/cargo#2980](https://github.com/rust-lang/cargo/issues/2980)
 
 # Guide-level explanation
 [guide-level-explanation]: #guide-level-explanation
 
-Explain the proposal as if it was already included in the language and you were teaching it to another Rust programmer. That generally means:
-
-- Introducing new named concepts.
-- Explaining the feature largely in terms of examples.
-- Explaining how Rust programmers should *think* about the feature, and how it should impact the way they use Rust. It should explain the impact as concretely as possible.
-- If applicable, provide sample error messages, deprecation warnings, or migration guidance.
-- If applicable, describe the differences between teaching this to existing Rust programmers and new Rust programmers.
-- Discuss how this impacts the ability to read, understand, and maintain Rust code. Code is read and modified far more often than written; will the proposed feature make code easier to maintain?
-
-For implementation-oriented RFCs (e.g. for compiler internals), this section should focus on how compiler contributors should think about the change, and give examples of its concrete impact. For policy RFCs, this section should provide an example-driven introduction to the policy, and explain its impact in concrete terms.
+TODO
 
 # Reference-level explanation
 [reference-level-explanation]: #reference-level-explanation
 
-This is the technical portion of the RFC. Explain the design in sufficient detail that:
-
-- Its interaction with other features is clear.
-- It is reasonably clear how the feature would be implemented.
-- Corner cases are dissected by example.
-
-The section should return to the examples given in the previous section, and explain more fully how the detailed proposal makes those examples work.
+TODO
 
 # Drawbacks
 [drawbacks]: #drawbacks
 
-Why should we *not* do this?
+TODO
 
 # Rationale and alternatives
 [rationale-and-alternatives]: #rationale-and-alternatives
 
-- Why is this design the best in the space of possible designs?
-- What other designs have been considered and what is the rationale for not choosing them?
-- What is the impact of not doing this?
-- If this is a language proposal, could this be done in a library or macro instead? Does the proposed change make Rust code easier or harder to read, understand, and maintain?
+This couples mutually exclusive features with global features because
+- Mutually exclusive features provides design insight into what we should do for global features
+- Scoping mutually exclusive features to global features solves the feature-unification problem
+
+## Alternatives
+
+### Native support for controlling `std` / `alloc` / `core`
+
+See [Internals: Pre-Pre-RFC: making `std`-dependent Cargo features a first-class concept](https://internals.rust-lang.org/t/pre-pre-rfc-making-std-dependent-cargo-features-a-first-class-concept/10828)
+
+### Native cargo support for `-sys` crates
+
+Instead of a convention around global features, cargo could have built-in flags
+for controlling `-sys` crates and could ship some native support that would
+remove some boilerplate and ensure consistency.
+
+Downsides
+- Longer time frame: this would require more investigation and experimentation.
+- Doesn't handle all use cases
+
+See
+- [Internals: Direct support for pkg-config](https://internals.rust-lang.org/t/direct-support-for-pkg-config-in-cargo/4411)
+
+### Automatic feature activation
+
+Too many spooky effects
+
+See
+- [RFC #1787](https://github.com/rust-lang/rfcs/pull/1787)
+- [rust-lang/cargo#1555](https://github.com/rust-lang/cargo/issues/1555)
+- [rust-lang/cargo#2593](https://github.com/rust-lang/cargo/issues/2593#issuecomment-212508225)
+
+### Mutually exclusive features conflict via an identifier
+
+No way to unify these, the decision needs to be at the top-level crate.
+
+See
+- [Pre-RFC cargo-mutex features](https://github.com/ctron/rfcs/blob/feature/cargo_feature_caps_1/text/0000-cargo-mutex-features.md)
+- [Internals: Pre-RFC Cargo mutually exclusive features](https://internals.rust-lang.org/t/pre-rfc-cargo-mutually-exclusive-features/13182)
+
+### Mutually exclusive features that instantiate two copies of a dependency
+
+While there might be a place for a variant of this idea, most motivating cases
+are dealing with wanting one version of the dependency.
+
+See [rust-lang/cargo#2980](https://github.com/rust-lang/cargo/issues/2980#issuecomment-667207117)
+
+See also [Internals: module-level generics](https://internals.rust-lang.org/t/pre-rfc-module-level-generics/12015)
+
+See also [Cabal backpack support](https://cabal.readthedocs.io/en/stable/cabal-package.html#backpack)
+
+### `log` / logger split
+
+Some cases can be modeled like `log` where a trait is defined and an API is
+exposed for regisering a specific implementation.
+
+If the interface crate is able to also depend on the implementations, it could
+also initialize the global with a default on first use if its unset.
+
+Benefits
+- Works today
+- Flexible on what state an implementation can be initialized with
+
+Downsides
+- Doesn't work for all use cases
+- Imperative wiring together of APIs in the top-level crate
+- Some level of overhead
+- Supporting a default requires building all implementations since the choice is at runtime
+
+### Facade crates
+
+On [internals](https://internals.rust-lang.org/t/idea-facade-crates/18051),
+the idea was proposed to bake-in support for the log pattern so it can be done at compile time.
+
+Downsides
+- Doesn't work for all use cases like `-sys` crates
 
 # Prior art
 [prior-art]: #prior-art
 
-Discuss prior art, both the good and the bad, in relation to this proposal.
-A few examples of what this can include are:
+## Gentoo USE flags
 
-- For language, library, cargo, tools, and compiler proposals: Does this feature exist in other programming languages and what experience have their community had?
-- For community proposals: Is this done by some other community and what were their experiences with it?
-- For other teams: What lessons can we learn from what other communities have done here?
-- Papers: Are there any published papers or great posts that discuss this? If you have some relevant papers to refer to, this can serve as a more detailed theoretical background.
+- [Top-level documentation](https://wiki.gentoo.org/wiki/USE_flag)
+  - [Using USE flags](https://wiki.gentoo.org/wiki/Handbook:AMD64/Working/USE#Using_USE_flags)
+- [index of all USE flags](https://www.gentoo.org/support/use-flags/)
 
-This section is intended to encourage you as an author to think about the lessons from other languages, provide readers of your RFC with a fuller picture.
-If there is no prior art, that is fine - your ideas are interesting to us whether they are brand new or if it is an adaptation from other languages.
+USE flags are booleans (set or unset) that are defined through a form of layered config,
+with some defaulted to on.
+Users may then enable more or disable some of the defaulted flags.
+This can be done globally or on a per-package basis.
+Packages then check what is enabled and conditionalize their builds off of them.
 
-Note that while precedent set by other languages is some motivation, it does not on its own motivate an RFC.
-Please also take into consideration that rust sometimes intentionally diverges from common language features.
+## Bazel
+
+[Features](https://docs.bazel.build/versions/0.26.0/cc-toolchain-config-reference.html#features)
+may "provide" a feature and it is an error to "provide" a feature more than once.
+
+## Gradle
+
+This seems work similar to Bazel but instead of "providing" a feature, you
+[declare a capability](https://docs.gradle.org/current/userguide/feature_variants.html#sec::incompatible_variants).
+
+See also https://docs.gradle.org/6.0.1/userguide/dependency_capability_conflict.html
 
 # Unresolved questions
 [unresolved-questions]: #unresolved-questions
 
-- What parts of the design do you expect to resolve through the RFC process before this gets merged?
-- What parts of the design do you expect to resolve through the implementation of this feature before stabilization?
-- What related issues do you consider out of scope for this RFC that could be addressed in the future independently of the solution that comes out of this RFC?
+TODO
 
 # Future possibilities
 [future-possibilities]: #future-possibilities
 
-Think about what the natural extension and evolution of your proposal would
-be and how it would affect the language and project as a whole in a holistic
-way. Try to use this section as a tool to more fully consider all possible
-interactions with the project and language in your proposal.
-Also consider how this all fits into the roadmap for the project
-and of the relevant sub-team.
-
-This is also a good place to "dump ideas", if they are out of scope for the
-RFC you are writing but otherwise related.
-
-If you have tried and cannot think of any future possibilities,
-you may simply state that you cannot think of anything.
-
-Note that having something written down in the future-possibilities section
-is not a reason to accept the current or a future RFC; such notes should be
-in the section on motivation or rationale in this or subsequent RFCs.
-The section merely provides additional information.
+TODO
