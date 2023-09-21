@@ -334,10 +334,11 @@ Can we loosen the requirement on these so they don't need the same
 
 ## `cfg_str!`
 
-Expose the valid value for the specified global as a `&'static str`
+Expose value set for the current package as a `&'static str`
 ```rust
-let foo = cfg_str!("foo");
+let foo = cfg_str!("global::foo");
 ```
+- Error for `cfg`s that have a name without a value
 
 ## Additional `globals.*.values` validation rules
 
