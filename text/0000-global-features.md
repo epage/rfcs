@@ -38,7 +38,7 @@ git2 = "0.18"
 [motivation]: #motivation
 
 Use cases
-- An crate author offers optional optimizations, like using `parking_lot`
+- A crate author offers optional optimizations, like using `parking_lot`
   - Currently solved by using a feature like in
     [tokio](https://github.com/tokio-rs/tokio/blob/ad7f988da377c365cacb5ca24d044a9be5de5889/tokio/Cargo.toml#L100)
   - This requires callers to either enable it directly, re-export the feature, or have applications directly depend on `tokio` and enable it.
@@ -142,7 +142,7 @@ set-local = "auto"
 Packages may configure globals for use when built as a root crate
 ```toml
 [package]
-set-globals = [ "sys=static", "zlib="miniz" ]
+set-globals = [ "sys=static", "zlib=miniz" ]
 # may also be inherited from the workspace
 # set-globals.workspace = true
 ```
