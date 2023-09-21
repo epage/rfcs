@@ -332,7 +332,7 @@ Most of the time, libs may be selected as part of the root crates (`cargo check
 Can we loosen the requirement on these so they don't need the same
 `set-globals` as others in the workspace, making it easier to build?
 
-## `cfg_value!`
+## `cfg_str!`
 
 Expose the valid value for the specified global as a `&'static str`
 ```rust
