@@ -16,12 +16,22 @@ at decisions that affect the entire final artifact.
 ```toml
 [package]
 name = "git2-sys"
-version = "0.0.0"
+version = "0.18.5"
 
 [globals.sys]
 description = "External library link method"
 values = ["static", "dynamic", "auto"]
 self-default = "auto"
+```
+
+```toml
+[package]
+name = "git-tool"
+version = "0.0.0"
+set-globals = ["sys=static"]
+
+[dependencies]
+git2 = "0.18"
 ```
 
 # Motivation
