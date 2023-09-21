@@ -13,6 +13,17 @@ This is currently worked around by tunneling features up or relying on environme
 This RFC proposes an alternative to features called `globals` that are targeted
 at decisions that affect the entire final artifact.
 
+```toml
+[package]
+name = "git2-sys"
+version = "0.0.0"
+
+[globals.sys]
+description = "External library link method"
+values = ["static", "dynamic", "auto"]
+self-default = "auto"
+```
+
 # Motivation
 [motivation]: #motivation
 
@@ -50,10 +61,10 @@ TODO
 # Reference-level explanation
 [reference-level-explanation]: #reference-level-explanation
 
-`Cargo.toml` gains a new `[globals]` section
+Packages may declare what `globals` they subscribe to:
 ```toml
 [package]
-name = "foo"
+name = "git2-sys"
 version = "0.0.0"
 
 [globals.sys]
@@ -69,7 +80,7 @@ cc = "1.0.83"
 - Global names follow the same naming rules as cargo features
 - Global values may be any UnicodeXID continue character
 
-These can then be referenced in the source, like this `build.rs`
+These can then be referenced in the `global` namespace in the source, like this `build.rs`
 ```rust
 #[cfg(any(global::sys = "dynamic", global::sys = "auto"))]
 fn dynamic() -> Option<Target> {
@@ -95,10 +106,11 @@ fn auto() -> Option<Target> {
     None
 }
 ```
-- References by this crate to global names/values in `cfg`s and `cargo:rustc-cfg` build script directive will be validated based on
+- References by this crate to global names/values in `cfg`s and
+  `cargo:rustc-cfg` build script directive will be validated based on
   [RFC 3013](https://rust-lang.github.io/rfcs/3013-conditional-compilation-checking.html) (rustc and cargo)
 
-Workspace globals may also be specified and a package may inherit them and append, but not modify, them:
+Workspace globals may also be specified and a package may inherit them:
 ```toml
 [workspace.globals.sys]
 description = "External library link method"
@@ -106,7 +118,7 @@ values.enum = ["static", "dynamic", "auto"]
 self-default = "auto"
 ```
 ```toml
-[globals]
+[globals.sys]
 workspace = true
 
 [globals.zlib]
@@ -114,30 +126,33 @@ description = "zlib implementation"
 values = ["miniz", "zlib", "zlib-ng"]
 set-local = "auto"
 ```
-`cargo new` will not automatically inherit `[workspace.globals]`, like it does for `[workspace.package]` and `[workspace.lints]`.
+- This initial design has no overridable fields when inheriting, unlike inheriting workspace dependencies
+- Like workspace dependencies, `cargo new` will not automatically inherit `workspace.globals`
 
-Top-level callers may configure globals
+Packages may configure globals for use when built as a root crate
 ```toml
 [package]
 set-globals = [ "sys=static", "zlib="miniz" ]
 # may also be inherited from the workspace
 # set-globals.workspace = true
 ```
-Also
+- When building multiple root crates (`cargo check --workspace`),
+  it is a compilation error if they disagree about `set-globals`
+  (i.e. no unification is happening like it does for `features`)
+
+Also these may be set:
 - On the command-line as `--globals sys=dynamic`
 - As a config setting
 
-Instead of unifying `set-globals`, it is a compilation error when multiple top-level crates are being built at once with different `set-globals`.
-
-On `cargo publish`, `workspace.set-globals` is copied to `package.set-globals` to apply to `cargo install`
-
-When resolving dependencies (the feature pass), fingerprinting of packages, an  when compiling the packages,
-`workspace.set-globals` will only apply to a package if the value is valid within the schema for that package,
+When resolving dependencies (the feature pass), fingerprinting of packages, an
+when compiling the packages,
+`workspace.set-globals` will only apply to a package if the value is valid
+within the schema for that package,
 otherwise the default will be used if any.
-Any unused globals will be a compilation error.
+Any unused `set-globals` will be an error.
 
 `cargo <cmd> --globals` (no argument) will report the globals available for
-being set within the current package along with their valid values.
+being set within the current package along with their current value and valid values.
 
 ## SemVer
 
@@ -172,9 +187,16 @@ Global features take a value, rather than allowing relying on presence like norm
 
 `package.set-globals` is a package setting, with conflict errors, rather than a
 workspace setting because people will likely have binaries that serve very
-different roles within the same workspace (different target platforms, etc).
+different roles within the same workspace (different target platforms, host vs wasm, etc).
 
 `package.set-globals` is an array of strings in case we add multi-valued globals in the future.
+
+The loose schema is used to allow it to be declared in a distributed fashion
+without packages failing due to definition conflicts.
+Alternatively, we could make these parameters on individual packages.
+The downside is then we'd need a patch-like table for specifying the exact
+dependency in the tree to set the parameters. 
+This scheme is brittle in handling upgrades.
 
 ## Alternatives
 
@@ -206,7 +228,7 @@ See
 
 ### Mutually exclusive features conflict via an identifier
 
-Some systems call this "provides" and others a "capablity".
+Some systems call this "provides" and others a "capability".
 
 Downsides
 - No way to unify these, the decision needs to be at the top-level crate.
@@ -218,7 +240,7 @@ See
 - [Pre-RFC cargo-mutex features](https://github.com/ctron/rfcs/blob/feature/cargo_feature_caps_1/text/0000-cargo-mutex-features.md)
 - [Internals: Pre-RFC Cargo mutually exclusive features](https://internals.rust-lang.org/t/pre-rfc-cargo-mutually-exclusive-features/13182)
 
-### Mutually exclusive features that instantiate two copies of a dependency
+### Mutually exclusive features that instantiate distinct copies a dependency
 
 While there might be a place for a variant of this idea, most motivating cases
 are dealing with wanting one version of the dependency.
@@ -285,15 +307,33 @@ See also https://docs.gradle.org/6.0.1/userguide/dependency_capability_conflict.
 # Unresolved questions
 [unresolved-questions]: #unresolved-questions
 
-- Naming
 - Target-specific `set-globals`
+- Profile-specific `set-globals`
+- Naming, especially for `package.set-globals` and `self-default`
+- Whether `values.enum` is needed vs just `values`
 
 # Future possibilities
 [future-possibilities]: #future-possibilities
 
-## `globals.*.values`
+## Loosen error on conflicting globals
 
-Potential variants for this tagged enum include:
+Most of the time, libs may be selected as part of the root crates (`cargo check
+--workspace`) but effectively aren't a root crate.
+Can we loosen the requirement on these so they don't need the same
+`set-globals` as others in the workspace, making it easier to build?
+
+## `cfg_value!`
+
+Expose the valid value for the specified global as a `&'static str`
+```rust
+let foo = cfg_str!("foo");
+```
+
+## Additional `globals.*.values` validation rules
+
+Currently, we only support validation based on a set of possible values.
+
+Potential variants for the `globals.*.values` tagged enum include:
 - `globals.foo.values = "bool"`
 - `globals.foo.values.range = "8-23"`
 - `globals.foo.values.path = "ImplForTrait"`
@@ -303,10 +343,3 @@ Potential variants for this tagged enum include:
 
 Extend the definition of a global to include a `multi` field.
 Instead of new assignments overwriting, they append.
-
-## `cfg_value!`
-
-Expose the valid value for the specified global as a `&'static str`
-```rust
-let foo = cfg_str!("foo");
-```
