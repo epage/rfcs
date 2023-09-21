@@ -50,7 +50,107 @@ TODO
 # Reference-level explanation
 [reference-level-explanation]: #reference-level-explanation
 
-TODO
+`Cargo.toml` gains a new `[globals]` section
+```toml
+[package]
+name = "foo"
+version = "0.0.0"
+
+[globals.sys]
+description = "External library link method"
+values = ["static", "dynamic", "auto"]
+self-default = "auto"
+
+[target.'cfg(any(global::sys = "dynamic", global::sys = "auto"))'.build-dependencies]
+pkg_config = "0.3.27"
+[target.'cfg(any(global::sys = "static", global::sys = "auto"))'.build-dependencies]
+cc = "1.0.83"
+```
+- Global names follow the same naming rules as cargo features
+- Global values may be any UnicodeXID continue character
+
+These can then be referenced in the source, like this `build.rs`
+```rust
+#[cfg(any(global::sys = "dynamic", global::sys = "auto"))]
+fn dynamic() -> Option<Target> {
+    // ...
+}
+
+#[cfg(any(global::sys = "static", global::sys = "auto"))]
+fn static() -> Option<Target> {
+    // ...
+}
+
+fn auto() -> Option<Target> {
+    #[cfg(any(global::sys = "dynamic", global::sys = "auto"))]
+    if let Some(target) = dynamic() {
+        return Some(target);
+    }
+
+    #[cfg(any(global::sys = "static", global::sys = "auto"))]
+    if let Some(target) = static() {
+        return Some(target);
+    }
+
+    None
+}
+```
+- References by this crate to global names/values in `cfg`s and `cargo:rustc-cfg` build script directive will be validated based on
+  [RFC 3013](https://rust-lang.github.io/rfcs/3013-conditional-compilation-checking.html) (rustc and cargo)
+
+Workspace globals may also be specified and a package may inherit them and append, but not modify, them:
+```toml
+[workspace.globals.sys]
+description = "External library link method"
+values.enum = ["static", "dynamic", "auto"]
+self-default = "auto"
+```
+```toml
+[globals]
+workspace = true
+
+[globals.zlib]
+description = "zlib implementation"
+values = ["miniz", "zlib", "zlib-ng"]
+set-local = "auto"
+```
+`cargo new` will not automatically inherit `[workspace.globals]`, like it does for `[workspace.package]` and `[workspace.lints]`.
+
+Top-level callers may configure globals
+```toml
+[workspace]
+set-globals = [ "sys=static", "zlib="miniz" ]
+
+# or on a package when not when not a member of a workspace (error on workspace members)
+[package]
+set-globals = [ "sys=static", "zlib="miniz" ]
+```
+Also
+- On the command-line as `--globals sys=dynamic`
+- As a config setting
+
+On `cargo publish`, `workspace.set-globals` is copied to `package.set-globals` to apply to `cargo install`
+
+When resolving dependencies (the feature pass) and when compiling the packages,
+`workspace.set-globals` will only apply to a package if the value is valid within the schema,
+otherwise the default will be used if any.
+Any unused globals will be a compilation error.
+
+`cargo <cmd> --globals` (no argument) will report the globals available for
+being set within the current package along with their valid values.
+
+## SemVer
+
+SemVer Compatible
+- Adding a global
+- Adding a global value
+
+Semver Incompatible
+- Removing a global
+- Removing a global value
+
+Context-dependent
+- Changing a global default
 
 # Drawbacks
 [drawbacks]: #drawbacks
@@ -63,6 +163,14 @@ TODO
 This couples mutually exclusive features with global features because
 - Mutually exclusive features provides design insight into what we should do for global features
 - Scoping mutually exclusive features to global features solves the feature-unification problem
+
+Global features take a value, rather than allowing relying on presence like normal `cfg`s
+(see [RFC 3013](https://rust-lang.github.io/rfcs/3013-conditional-compilation-checking.html))
+- Less brittle for future evolution
+- Easier to unify for a distributed schema
+- Removes the complexity in declaratively defining presence and value instances
+
+`workspace.set-globals` is an array of strings in case we add multi-valued globals in the future.
 
 ## Alternatives
 
@@ -172,4 +280,22 @@ TODO
 # Future possibilities
 [future-possibilities]: #future-possibilities
 
-TODO
+## `globals.*.values`
+
+Potential variants for this tagged enum include:
+- `globals.foo.values = "bool"`
+- `globals.foo.values.range = "8-23"`
+- `globals.foo.values.path = "ImplForTrait"`
+- `globals.foo.values.expr = "some_func()"`
+
+## Multi-valued globals
+
+Extend the definition of a global to include a `multi` field.
+Instead of new assignments overwriting, they append.
+
+## `cfg_value!`
+
+Expose the valid value for the specified global as a `&'static str`
+```rust
+let foo = cfg_str!("foo");
+```
