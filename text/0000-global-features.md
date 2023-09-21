@@ -118,21 +118,21 @@ set-local = "auto"
 
 Top-level callers may configure globals
 ```toml
-[workspace]
-set-globals = [ "sys=static", "zlib="miniz" ]
-
-# or on a package when not when not a member of a workspace (error on workspace members)
 [package]
 set-globals = [ "sys=static", "zlib="miniz" ]
+# may also be inherited from the workspace
+# set-globals.workspace = true
 ```
 Also
 - On the command-line as `--globals sys=dynamic`
 - As a config setting
 
+Instead of unifying `set-globals`, it is a compilation error when multiple top-level crates are being built at once with different `set-globals`.
+
 On `cargo publish`, `workspace.set-globals` is copied to `package.set-globals` to apply to `cargo install`
 
-When resolving dependencies (the feature pass) and when compiling the packages,
-`workspace.set-globals` will only apply to a package if the value is valid within the schema,
+When resolving dependencies (the feature pass), fingerprinting of packages, an  when compiling the packages,
+`workspace.set-globals` will only apply to a package if the value is valid within the schema for that package,
 otherwise the default will be used if any.
 Any unused globals will be a compilation error.
 
@@ -170,7 +170,11 @@ Global features take a value, rather than allowing relying on presence like norm
 - Easier to unify for a distributed schema
 - Removes the complexity in declaratively defining presence and value instances
 
-`workspace.set-globals` is an array of strings in case we add multi-valued globals in the future.
+`package.set-globals` is a package setting, with conflict errors, rather than a
+workspace setting because people will likely have binaries that serve very
+different roles within the same workspace (different target platforms, etc).
+
+`package.set-globals` is an array of strings in case we add multi-valued globals in the future.
 
 ## Alternatives
 
@@ -202,7 +206,13 @@ See
 
 ### Mutually exclusive features conflict via an identifier
 
-No way to unify these, the decision needs to be at the top-level crate.
+Some systems call this "provides" and others a "capablity".
+
+Downsides
+- No way to unify these, the decision needs to be at the top-level crate.
+- Linux distributions that use this implicitly wire the packages together by
+  dropping files in place with compatible names while Rust/Cargo need explicit
+  wiring, requiring the choice to be bubbled up the stack.  See instead "facade crates".
 
 See
 - [Pre-RFC cargo-mutex features](https://github.com/ctron/rfcs/blob/feature/cargo_feature_caps_1/text/0000-cargo-mutex-features.md)
@@ -275,7 +285,8 @@ See also https://docs.gradle.org/6.0.1/userguide/dependency_capability_conflict.
 # Unresolved questions
 [unresolved-questions]: #unresolved-questions
 
-TODO
+- Naming
+- Target-specific `set-globals`
 
 # Future possibilities
 [future-possibilities]: #future-possibilities
