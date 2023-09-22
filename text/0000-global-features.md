@@ -104,6 +104,7 @@ cc = "1.0.83"
 ```
 - Global names follow the same naming rules as cargo features
 - Global values may be any UnicodeXID continue character
+- TODO: Add [deprecation support](https://github.com/rust-lang/rfcs/pull/3486)
 
 These can then be referenced in the `global` namespace in the source, like this `build.rs`
 ```rust
