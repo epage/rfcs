@@ -15,24 +15,39 @@ at decisions that affect the entire final artifact.
 
 ```toml
 [package]
+name = "git-tool"
+version = "0.0.0"
+set-globals = { sys = ["static"] }
+
+[dependencies]
+git2 = "0.18"
+```
+
+```toml
+[package]
+name = "git2"
+version = "0.18.5"
+
+[dependencies]
+git2-sys = "0.18.5"
+```
+
+```toml
+[package]
 name = "git2-sys"
 version = "0.18.5"
 
 [globals.sys]
 description = "External library link method"
 values = ["static", "dynamic", "auto"]
-self-default = "auto"
+default = "auto"
 ```
 
-```toml
-[package]
-name = "git-tool"
-version = "0.0.0"
-set-globals = ["sys=static"]
-
-[dependencies]
-git2 = "0.18"
-```
+Differences from features
+- Setting them applies to transitive dependencies
+- Enumerations, rather than "present" / "not-present"
+- No unification
+- Works best for modifying behavior and not APIs
 
 # Motivation
 [motivation]: #motivation
@@ -80,7 +95,7 @@ version = "0.0.0"
 [globals.sys]
 description = "External library link method"
 values = ["static", "dynamic", "auto"]
-self-default = "auto"
+default = "auto"
 
 [target.'cfg(any(global::sys = "dynamic", global::sys = "auto"))'.build-dependencies]
 pkg_config = "0.3.27"
@@ -125,7 +140,7 @@ Workspace globals may also be specified and a package may inherit them:
 [workspace.globals.sys]
 description = "External library link method"
 values.enum = ["static", "dynamic", "auto"]
-self-default = "auto"
+default = "auto"
 ```
 ```toml
 [globals.sys]
@@ -134,7 +149,7 @@ workspace = true
 [globals.zlib]
 description = "zlib implementation"
 values = ["miniz", "zlib", "zlib-ng"]
-set-local = "auto"
+default = "auto"
 ```
 - This initial design has no overridable fields when inheriting, unlike inheriting workspace dependencies
 - Like workspace dependencies, `cargo new` will not automatically inherit `workspace.globals`
@@ -142,10 +157,11 @@ set-local = "auto"
 Packages may configure globals for use when built as a root crate
 ```toml
 [package]
-set-globals = [ "sys=static", "zlib=miniz" ]
+set-globals = { sys = ["static"], zlib = ["miniz"] }
 # may also be inherited from the workspace
 # set-globals.workspace = true
 ```
+- Globals are arrays in case two packages are subscribed to that global with disjoint valid values
 - When building multiple root crates (`cargo check --workspace`),
   it is a compilation error if they disagree about `set-globals`
   (i.e. no unification is happening like it does for `features`)
@@ -159,7 +175,8 @@ when compiling the packages,
 `workspace.set-globals` will only apply to a package if the value is valid
 within the schema for that package,
 otherwise the default will be used if any.
-Any unused `set-globals` will be an error.
+When multiple values are valid, the first will be selected.
+Any unused `set-globals` will be a warning.
 
 `cargo <cmd> --globals` (no argument) will report the globals available for
 being set within the current package along with their current value and valid values.
@@ -170,12 +187,10 @@ SemVer Compatible
 - Adding a global
 - Adding a global value
 
-Semver Incompatible
+Context-dependent for whether compatible or not
+- Changing a global default
 - Removing a global
 - Removing a global value
-
-Context-dependent
-- Changing a global default
 
 # Drawbacks
 [drawbacks]: #drawbacks
@@ -199,14 +214,15 @@ Global features take a value, rather than allowing relying on presence like norm
 workspace setting because people will likely have binaries that serve very
 different roles within the same workspace (different target platforms, host vs wasm, etc).
 
-`package.set-globals` is an array of strings in case we add multi-valued globals in the future.
-
 The loose schema is used to allow it to be declared in a distributed fashion
 without packages failing due to definition conflicts.
 Alternatively, we could make these parameters on individual packages.
 The downside is then we'd need a patch-like table for specifying the exact
 dependency in the tree to set the parameters. 
 This scheme is brittle in handling upgrades.
+
+Unused `set-globals` is not an error so that changing dependencies is not a
+breaking change.
 
 ## Alternatives
 
@@ -319,8 +335,12 @@ See also https://docs.gradle.org/6.0.1/userguide/dependency_capability_conflict.
 
 - Target-specific `set-globals`
 - Profile-specific `set-globals`
-- Naming, especially for `package.set-globals` and `self-default`
+- Naming, especially for `package.set-globals` and `default`
 - Whether `values.enum` is needed vs just `values`
+- Can we make
+  [RFC 3013](https://rust-lang.github.io/rfcs/3013-conditional-compilation-checking.html)
+  work with the root `cfg` namespace being an open set of fields while `global::`
+  namespace is a closed set?
 
 # Future possibilities
 [future-possibilities]: #future-possibilities
@@ -344,11 +364,14 @@ let foo = cfg_str!("global::foo");
 
 Currently, we only support validation based on a set of possible values.
 
-Potential variants for the `globals.*.values` tagged enum include:
-- `globals.foo.values = "bool"`
+Potential fields for the `globals.*.values` include:
+- `globals.foo.values.bool = true`
 - `globals.foo.values.range = "8-23"`
 - `globals.foo.values.path = "ImplForTrait"`
 - `globals.foo.values.expr = "some_func()"`
+- `globals.foo.values.any = true` (makes values an open set, predantic warning available when it falls back to this)
+
+(not a tagged variant to make future evolution easier)
 
 ## Multi-valued globals
 
