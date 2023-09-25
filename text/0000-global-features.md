@@ -47,7 +47,8 @@ Differences from features
 - Setting them applies to transitive dependencies
 - Enumerations, rather than "present" / "not-present"
 - No unification
-- Works best for modifying behavior and not APIs
+
+We suspect this will work best for modifying behavior while features will work best for extending APIs.
 
 # Motivation
 [motivation]: #motivation
