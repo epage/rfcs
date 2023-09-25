@@ -77,6 +77,7 @@ See also
 - [rust-lang/cargo#9094](https://github.com/rust-lang/cargo/issues/9094)
 - [rust-lang/cargo#1555](https://github.com/rust-lang/cargo/issues/1555)
 - [rust-lang/cargo#2980](https://github.com/rust-lang/cargo/issues/2980)
+- [rust-lang/cargo#3646](https://github.com/rust-lang/cargo/issues/3646)
 
 # Guide-level explanation
 [guide-level-explanation]: #guide-level-explanation
