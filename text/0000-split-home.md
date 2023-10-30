@@ -121,8 +121,8 @@ migrate_cargo_config config.toml
 migrate_cargo_data env
 migrate_cargo_data .crates.toml
 migrate_cargo_data .crates2.json
+migrate_cargo_data credentials.toml  # avoid backing up secrets
 migrate_cargo_bin
-migrate_cargo_cache credentials.toml  # avoid backing up secrets
 migrate_cargo_cache registry
 migrate_cargo_cache git
 migrate_cargo_cache target  # used by "cargo script"
@@ -184,6 +184,10 @@ The central thesis of this design is that the caches are throw-away so we don't
 need to provide a migration path for them but we do for config.
 From that, we are copying git's model of layering both the old and new config locations on top of each other
 
+`credentials.toml` was put under `CARGO_DATA_HOME` as its program-managed data
+- `CARGO_CONFIG_HOME` might cause it to get backed up to public git repos, exposing secrets
+- Ideally people will start migrating to [OS-native credential stores](https://doc.rust-lang.org/nightly/cargo/reference/registry-authentication.html)
+
 Existing issues:
 - [rust-lang/cargo#1734](https://github.com/rust-lang/cargo/issues/1734)
 - [rust-lang/rustup#247](https://github.com/rust-lang/rustup/issues/247)
@@ -214,7 +218,6 @@ For more, see [arch's wiki entry for XDG Base Directory](https://wiki.archlinux.
 # Unresolved questions
 [unresolved-questions]: #unresolved-questions
 
-- Is `credentials.toml` best under `CARGO_CACHE_HOME`?
 - Does config fallback work for rustup?
 
 # Future possibilities
