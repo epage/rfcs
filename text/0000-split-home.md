@@ -51,7 +51,9 @@ we are going for this scaled back solution for now because
 
 Users who want to split up `~/.cargo` or `~/rustup` into platform-specific paths can set
 - `CARGO_CONFIG_HOME`
-- `CARGO_CACHE_HOME`
+- `CARGO_DATA_HOME`
+- `CARGO_BIN_HOME`
+- `CARGO_CONFIG_HOME`
 - `RUSTUP_CONFIG_HOME`
 - `RUSTUP_CACHE_HOME`
 
@@ -63,6 +65,11 @@ CARGO_HOME=$(realpath ~/cargo)
 CARGO_CONFIG_HOME=$(realpath ~/.config/cargo)
 mkdir -p $CARGO_CONFIG_HOME
 echo CARGO_CONFIG_HOME=$CARGO_CONFIG_HOME >> ~/.bashrc
+CARGO_DATA_HOME=$(realpath ~/.local/share/cargo)
+mkdir -p $CARGO_DATA_HOME
+echo CARGO_DATA_HOME=$CARGO_DATA_HOME >> ~/.bashrc
+CARGO_BIN_HOME=$(realpath ~/.local/share/cargo/bin)
+echo CARGO_BIN_HOME=$CARGO_BIN_HOME >> ~/.bashrc
 CARGO_CACHE_HOME=$(realpath ~/.cache/cargo)
 mkdir -p $CARGO_CACHE_HOME
 echo CARGO_CACHE_HOME=$CARGO_CACHE_HOME >> ~/.bashrc
@@ -79,6 +86,17 @@ function migrate_cargo_config {
     local item=$1
     mv $CARGO_HOME/$item $CARGO_CONFIG_HOME/$item
     ln -s $CARGO_CONFIG_HOME/$item $CARGO_HOME/$item
+}
+
+function migrate_cargo_data {
+    local item=$1
+    mv $CARGO_HOME/$item $CARGO_DATA_HOME/$item
+    ln -s $CARGO_DATA_HOME/$item $CARGO_HOME/$item
+}
+
+function migrate_cargo_bin {
+    mv $CARGO_HOME/bin $CARGO_BIN_HOME
+    ln -s $CARGO_BIN_HOME/$item $CARGO_HOME/$item
 }
 
 function migrate_cargo_cache {
@@ -100,6 +118,10 @@ function migrate_rustup_cache {
 }
 
 migrate_cargo_config config.toml
+migrate_cargo_data env
+migrate_cargo_data .crates.toml
+migrate_cargo_data .crates2.json
+migrate_cargo_bin
 migrate_cargo_cache credentials.toml  # avoid backing up secrets
 migrate_cargo_cache registry
 migrate_cargo_cache git
@@ -123,6 +145,12 @@ We'll add to the confusingly named [`home` package](https://crates.io/crates/hom
   - `home::cargo_home()`
 - `cargo_config_home`: Returns
   - `CARGO_CONFIG_HOME`, if set
+- `cargo_data_home`: Returns the first match
+  1. `CARGO_DATA_HOME`, if set
+  2. `home::cargo_home()`
+- `cargo_bin_home`: Returns the first match
+  1. `CARGO_BIN_HOME`, if set
+  2. `home::cargo_home().join("bin")`
 - `cargo_cache_home`: Returns the first match
   1. `CARGO_CACHE_HOME`, if set
   2. `home::cargo_home()`
@@ -144,6 +172,10 @@ Each of these new environment variables will be blocked from being set in [`conf
 [drawbacks]: #drawbacks
 
 Why should we *not* do this?
+
+`~/.cargo/bin` and related files requires both updated rustup and cargo
+
+rustup assumes complete ccontrol of `~/.cargo/bin` and people might map it to `~/.local/bin` which would cause unexpected behavior
 
 # Rationale and alternatives
 [rationale-and-alternatives]: #rationale-and-alternatives
@@ -184,18 +216,6 @@ For more, see [arch's wiki entry for XDG Base Directory](https://wiki.archlinux.
 
 - Is `credentials.toml` best under `CARGO_CACHE_HOME`?
 - Does config fallback work for rustup?
-- What to do about `$CARGO_HOME/bin`?
-  - Can we defer it?
-  - How could we support it?
-    - Requires interop between rustup and cargo which ship separately
-    - Bins aren't throwaway, like cache
-    - For XDG, [the spec was modified](https://gitlab.freedesktop.org/xdg/xdg-specs/-/merge_requests/38) to reference `~/.local/bin` without an `XDG_BIN_HOME` variable
-    - Rustup assumes total control of `$CARGO_HOME/bin`
-    - Files aren't all under `bin/`:
-      - `$CARGO_HOME/.crates2.json`
-      - `$CARGO_HOME/.crates.toml`
-      - `$CARGO_HOME/env`
-      - `$CARGO_HOME/bin`
 
 # Future possibilities
 [future-possibilities]: #future-possibilities
