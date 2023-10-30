@@ -237,6 +237,19 @@ Update [`home` package](https://crates.io/crates/home) with the following
     - `~/.config/cargo`
   - windows:
     - `AppData\Roaming\Cargo`
+- `cargo_data_home`: Returns the first match
+  1. `CARGO_DATA_HOME`, if set
+  2. linux or macOS:
+    1. `$XDG_DATA_HOME/cargo`, if set
+    2. `~/.local/share/cargo`
+  3. windows:
+    - TBD
+- `cargo_bin_home`: Returns the first match
+  1. `CARGO_BIN_HOME`, if set
+  2. linux or macOS:
+    - TBD
+  3. windows:
+    - TBD
 - `cargo_cache_home`: Returns the first match
   1. `CARGO_CACHE_HOME`, if set
   2. linux or macOS:
