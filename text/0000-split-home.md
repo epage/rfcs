@@ -1,5 +1,6 @@
 - Feature Name: `split-home`
 - Start Date: 10/23/2023
+- Pre-RFC: [Internals](https://internals.rust-lang.org/t/pre-rfc-split-cargo-home/19747) ([zulip](https://rust-lang.zulipchat.com/#narrow/stream/246057-t-cargo/topic/Pre-RFC.3A.20Split.20CARGO_HOME))
 - RFC PR: [rust-lang/rfcs#0000](https://github.com/rust-lang/rfcs/pull/0000)
 - Rust Issue: [rust-lang/rust#0000](https://github.com/rust-lang/rust/issues/0000)
 
