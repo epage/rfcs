@@ -239,23 +239,29 @@ Update [`home` package](https://crates.io/crates/home) with the following
     - `AppData\Roaming\Cargo`
 - `cargo_data_home`: Returns the first match
   1. `CARGO_DATA_HOME`, if set
-  2. linux or macOS:
+  2. `CARGO_HOME`, if set
+  3. `cargo_home()`, if present
+  4. linux or macOS:
     1. `$XDG_DATA_HOME/cargo`, if set
     2. `~/.local/share/cargo`
-  3. windows:
+  5. windows:
     - TBD
 - `cargo_bin_home`: Returns the first match
   1. `CARGO_BIN_HOME`, if set
-  2. linux or macOS:
+  2. `CARGO_HOME/bin`, if set
+  3. `cargo_home()`, if present
+  4. linux or macOS:
     - TBD
-  3. windows:
+  5. windows:
     - TBD
 - `cargo_cache_home`: Returns the first match
   1. `CARGO_CACHE_HOME`, if set
-  2. linux or macOS:
+  2. `CARGO_HOME`, if set
+  3. `cargo_home()`, if present
+  4. linux or macOS:
     1. `$XDG_CACHE_HOME/cargo`, if set
     2. `~/.cache/cargo`
-  3. windows:
+  5. windows:
     - `AppData\Local\Temp\Cargo`
 - `rustup_config_home`: Returns
   - `RUSTUP_CONFIG_HOME`, if set
@@ -266,10 +272,12 @@ Update [`home` package](https://crates.io/crates/home) with the following
     - `AppData\Roaming\Rustup`
 - `rustup_cache_home`: Returns the first match
   1. `RUSTUP_CACHE_HOME`, if set
-  2. linux or macOS:
+  2. `RUSTUP_HOME`, if set
+  3. `cargo_home()`, if present
+  4. linux or macOS:
     1. `$XDG_CACHE_HOME/rustup`, if set
     2. `~/.cache/rustup`
-  3. windows:
+  5. windows:
     - `AppData\Local\Temp\Cargo`
 
 Windows: [Roaming app data is no longer supported on Windows 11](https://learn.microsoft.com/en-us/windows/apps/design/app-settings/store-and-retrieve-app-data#roaming-data).
