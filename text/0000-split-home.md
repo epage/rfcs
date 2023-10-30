@@ -255,6 +255,9 @@ Update [`home` package](https://crates.io/crates/home) with the following
   3. windows:
     - `AppData\Local\Temp\Cargo`
 
+Windows: [Roaming app data is no longer supported on Windows 11](https://learn.microsoft.com/en-us/windows/apps/design/app-settings/store-and-retrieve-app-data#roaming-data).
+We'll still use these paths to communicate intent to Windows to be future compatible.
+
 macOS: This favors XDG over the platform-specific application directories to be
 more consistent with other CLI developer tooling.  The platform-specific
 application directories can always be emulated by setting the appropriate
