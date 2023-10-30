@@ -226,9 +226,8 @@ For more, see [arch's wiki entry for XDG Base Directory](https://wiki.archlinux.
 
 ## Platform-specific paths
 
-**Note:** The information here is for illustrative purposes and bikeshedding
-the proposed ideas is off-topic as this RFC is not making any decision on what
-these paths should be.
+**Note:** The information here is for illustrative purposes and discussing the details
+is only relevant so far as it might affect a decision being made within this RFC.
 
 Update [`home` package](https://crates.io/crates/home) with the following
 - `cargo_config_home`: Returns
