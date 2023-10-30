@@ -296,3 +296,12 @@ Potential ideas include:
 - A `cargo dirs` built-in command
 - Reuse `cargo config`
 - `cargo --print <target>` much like `rustc --print <target>`
+
+## Allow setting `CARGO_CONFIG_HOME` from `.cargo/config.toml`
+
+For sharing of caches between host and docker,
+[rust-lang/cargo#6452](https://github.com/rust-lang/cargo/issues/6452)
+requested config-control over the global cache location.
+Being a cache,
+all results should be safe to re-calculate,
+unless some of the other `CARGO_*_HOME` variables.
