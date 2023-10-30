@@ -14,7 +14,8 @@ Today, `cargo` stores all user-global files in `CARGO_HOME` (`~/.cargo`), includ
 Similarly, `rustup` stores all user-global files in `~/.rustup`.
 
 This RFC would provide a way for users to emulate platform-specific paths by
-providing environment variables to control each of these types of paths
+providing environment variables to control each of these types of paths as an incremental,
+transitional step towards eventually supporting platform-specific paths.
 
 # Motivation
 [motivation]: #motivation
