@@ -220,8 +220,10 @@ For more, see [arch's wiki entry for XDG Base Directory](https://wiki.archlinux.
 [unresolved-questions]: #unresolved-questions
 
 - Does config fallback work for rustup?
+- What should be done for env variables that are empty (treat is unset?) or relative (unset? error?)?
 - Is rustup `update-hashes` cache, state, data, or config?
 - Is rustup `toolchains` cache, state, data, or config?
+- What all paths should `rustup uninstall` delete?
 
 # Future possibilities
 [future-possibilities]: #future-possibilities
@@ -253,7 +255,7 @@ Update [`home` package](https://crates.io/crates/home) with the following
 - `cargo_bin_home`: Returns the first match
   1. `CARGO_BIN_HOME`, if set
   2. `CARGO_HOME/bin`, if set
-  3. `cargo_home()`, if present
+  3. `cargo_home().join("bin")`, if present
   4. linux or macOS:
     - TBD
   5. windows:
@@ -289,10 +291,25 @@ Update [`home` package](https://crates.io/crates/home) with the following
 Windows: [Roaming app data is no longer supported on Windows 11](https://learn.microsoft.com/en-us/windows/apps/design/app-settings/store-and-retrieve-app-data#roaming-data).
 We'll still use these paths to communicate intent to Windows to be future compatible.
 
-macOS: This favors XDG over the platform-specific application directories to be
-more consistent with other CLI developer tooling.  The platform-specific
-application directories can always be emulated by setting the appropriate
-environment variables.
+macOS: This currently favors XDG over the platform-specific application directories to be
+more consistent with other CLI developer tooling.
+The platform-specific application directories can always be emulated by setting
+the appropriate environment variables.
+The final decision will be left to the relevant RFC
+
+Open questions
+- The paths for macOS
+- Local vs roaming on Windows
+- Should the higher-precedence-with-presence check be used for `cargo_home` or platform-specific paths?
+- How do we want to handle the fact that rustup proxies set `CARGO_HOME`?  When we get to the state when users aren't explicitly setting more specific variables, rustup's `CARGO_HOME` will win out
+
+## Automated migration
+
+Add a `rustup` subcommand to migrate people to this
+
+## Compat symlinks
+
+Have rustup manage symlinks when installing older toolchains
 
 ## Cargo CLI for reading the values
 
