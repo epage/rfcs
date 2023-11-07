@@ -141,11 +141,9 @@ migrate_rustup_cache update-hashes
 [reference-level-explanation]: #reference-level-explanation
 
 We'll add to the confusingly named [`home` package](https://crates.io/crates/home), the following
-- `cargo_config_homes`: Returns all of
-  - `home::cargo_config_home()`
-  - `home::cargo_home()`
-- `cargo_config_home`: Returns
-  - `CARGO_CONFIG_HOME`, if set
+- `cargo_config_home`: Returns the first match
+  1. `CARGO_CONFIG_HOME`, if set
+  2. `home::cargo_home()`
 - `cargo_data_home`: Returns the first match
   1. `CARGO_DATA_HOME`, if set
   2. `home::cargo_home()`
@@ -155,11 +153,9 @@ We'll add to the confusingly named [`home` package](https://crates.io/crates/hom
 - `cargo_cache_home`: Returns the first match
   1. `CARGO_CACHE_HOME`, if set
   2. `home::cargo_home()`
-- `rustup_config_homes`: Returns all of
-  - `home::rustup_config_home()`
-  - `home::rustup_home()`
-- `rustup_config_home`: Returns
-  - `RUSTUP_CONFIG_HOME`, if set
+- `rustup_config_home`: Returns the first match
+  1. `RUSTUP_CONFIG_HOME`, if set
+  2. `home::rustup_home()`
 - `rustup_cache_home`: Returns the first match
   1. `RUSTUP_CACHE_HOME`, if set
   2. Return `home::rustup_home()`
@@ -176,14 +172,10 @@ Why should we *not* do this?
 
 `~/.cargo/bin` and related files requires both updated rustup and cargo
 
-rustup assumes complete ccontrol of `~/.cargo/bin` and people might map it to `~/.local/bin` which would cause unexpected behavior
+rustup assumes complete control of `~/.cargo/bin` and people might map it to `~/.local/bin` which would cause unexpected behavior
 
 # Rationale and alternatives
 [rationale-and-alternatives]: #rationale-and-alternatives
-
-The central thesis of this design is that the caches are throw-away so we don't
-need to provide a migration path for them but we do for config.
-From that, we are copying git's model of layering both the old and new config locations on top of each other
 
 `credentials.toml` was put under `CARGO_DATA_HOME` as its program-managed data
 - `CARGO_CONFIG_HOME` might cause it to get backed up to public git repos, exposing secrets
@@ -197,6 +189,14 @@ Previous proposals:
 - [RFC 1615](ahttps://github.com/rust-lang/rfcs/pull/1615)
 - [spacekookie's unpublished RFC](https://github.com/spacekookie/rfcs/pull/1/files)
 - [poignardazur's blog post](https://poignardazur.github.io/2023/05/23/platform-compliance-in-cargo/)
+
+An alternative approach is to rely on caches being throw-away and to instead do
+- Read both configs (like git)
+- Hard split for cache
+
+Reasons we didn't go with this:
+- This doesn't work for `CARGO_BIN_HOME`
+- Rustup doesn't support a layered config for reading from two locations at once
 
 # Prior art
 [prior-art]: #prior-art
@@ -232,12 +232,14 @@ For more, see [arch's wiki entry for XDG Base Directory](https://wiki.archlinux.
 is only relevant so far as it might affect a decision being made within this RFC.
 
 Update [`home` package](https://crates.io/crates/home) with the following
-- `cargo_config_home`: Returns
-  - `CARGO_CONFIG_HOME`, if set
-  - linux or macOS:
-    - `$XDG_CONFIG_HOME/cargo`, if set
-    - `~/.config/cargo`
-  - windows:
+- `cargo_config_home`: Returns the first match
+  1. `CARGO_CONFIG_HOME`, if set
+  2. `CARGO_HOME`, if set
+  3. `cargo_home()`, if present
+  4. linux or macOS:
+    1. `$XDG_CONFIG_HOME/cargo`, if set
+    2. `~/.config/cargo`
+  5. windows:
     - `AppData\Roaming\Cargo`
 - `cargo_data_home`: Returns the first match
   1. `CARGO_DATA_HOME`, if set
@@ -266,11 +268,13 @@ Update [`home` package](https://crates.io/crates/home) with the following
   5. windows:
     - `AppData\Local\Temp\Cargo`
 - `rustup_config_home`: Returns
-  - `RUSTUP_CONFIG_HOME`, if set
-  - linux or macOS:
-    - `$XDG_CONFIG_HOME/rustup`, if set
-    - `~/.config/rustup`
-  - windows:
+  1. `RUSTUP_CONFIG_HOME`, if set
+  2. `RUSTUP_HOME`, if set
+  3. `cargo_home()`, if present
+  4. linux or macOS:
+    1. `$XDG_CONFIG_HOME/rustup`, if set
+    2. `~/.config/rustup`
+  5. windows:
     - `AppData\Roaming\Rustup`
 - `rustup_cache_home`: Returns the first match
   1. `RUSTUP_CACHE_HOME`, if set
