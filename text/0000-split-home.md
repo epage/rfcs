@@ -24,16 +24,16 @@ transitional step towards eventually supporting platform-specific paths.
 Benefits include:
 - Using a `.cargo` directory is violating the recommendations/rules on most
   operating systems. _(Linux, Windows, macOS. Especially painful on Windows,
-  where dotfiles are not hidden.)_
+  where dotfiles are not hidden)_
 - Putting caches in designated cache directories allows backup tools to ignore
   them. _(Linux, Windows, macOS. Example: Time Machine ignores the cache
-  directory on macOS.)_
+  directory on macOS)_
 - It makes it easier for users to manage, share and version-control their
   configuration files, as configuration files from different applications end up
   in the same place, instead of being intermingled with cache files. _(Linux
-  and macOS.)_
+  and macOS)_
 - Cargo contributes to the slow cleanup of the `$HOME` directory by stopping to
-  add its application-private clutter to it. _(Linux.)_
+  add its application-private clutter to it. _(Linux)_
 - Using a standard directory for binary outputs can allow the user to execute
   Cargo-installed binaries without modifying their `PATH` variable. _(Linux)_
 
@@ -220,8 +220,8 @@ For more, see [arch's wiki entry for XDG Base Directory](https://wiki.archlinux.
 [unresolved-questions]: #unresolved-questions
 
 - Does config fallback work for rustup?
-- Is rustup `update-hashes` cache, config, or state?
-- Is rustup `toolchains` cache, config, or state?
+- Is rustup `update-hashes` cache, state, data, or config?
+- Is rustup `toolchains` cache, state, data, or config?
 
 # Future possibilities
 [future-possibilities]: #future-possibilities
