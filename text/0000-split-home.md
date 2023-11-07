@@ -186,7 +186,7 @@ Existing issues:
 - [rust-lang/rustup#247](https://github.com/rust-lang/rustup/issues/247)
 
 Previous proposals:
-- [RFC 1615](ahttps://github.com/rust-lang/rfcs/pull/1615)
+- [RFC 1615](https://github.com/rust-lang/rfcs/pull/1615)
 - [spacekookie's unpublished RFC](https://github.com/spacekookie/rfcs/pull/1/files)
 - [poignardazur's blog post](https://poignardazur.github.io/2023/05/23/platform-compliance-in-cargo/)
 
