@@ -220,6 +220,8 @@ For more, see [arch's wiki entry for XDG Base Directory](https://wiki.archlinux.
 [unresolved-questions]: #unresolved-questions
 
 - Does config fallback work for rustup?
+- Is rustup `update-hashes` cache, config, or state?
+- Is rustup `toolchains` cache, config, or state?
 
 # Future possibilities
 [future-possibilities]: #future-possibilities
