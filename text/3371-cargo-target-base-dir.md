@@ -264,7 +264,7 @@ What's more, by explicitely not stabilizing it (and maybe voluntarily changing i
 
 Instead of providing symlinks, we could just say "what we have works"
 - `cargo metadata` includes the target directory and can be queried with `jq`
-- (unstable) [`--out-dir`](https://github.com/rust-lang/cargo/issues/6100)
+- (unstable) [`--out-dir`](https://github.com/rust-lang/cargo/issues/6790)
 
 As an extension, `cargo build` and related commands could output the absolute path to final artifacts
 
