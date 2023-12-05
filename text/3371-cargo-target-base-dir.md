@@ -198,14 +198,6 @@ A config option (CLI, `config.toml` and env var), `link-target-dir`, will be int
 
 When creating a forward link `cargo` will first attempt to create a symbolic link (regardless of the platform). If that fails, it will attempt zero or more platform-specific solutions, like junction points on NTFS. If that fails too, a warning will be emitted but this will not prevent the rest of the action to go on: regular calls like `cargo check/clippy/build/test` likely won't need this forward link and after the user has been warned they could either resolve the problem themselves or ignore it, depending on their own use case and domain-specific knowledge.
 
-### Providing backlinks
-
-Backlinks are metadata in `CARGO_TARGET_BASE_DIR` that links target directories back to the workspace they came from.
-
-[`targo`][tg] uses them in its own form of the feature and `cargo` uses them too in `CARGO_TARGET_BASE_DIR`.
-
-While details of the stored data are left to the implementation (there is no need for `cargo` to expose this data directly, though it could be exposed through `cargo metadata` in the future, see the relevant section below), one could imagine using it to clean target directories whose corresponding workspace does not exist anymore when calling something like `cargo clean --all-workspaces` (doing it automatically is not possible, else any workspace on external disks would have its target directory cleaned up each time the disk is unmounted, which is way too aggressive a default).
-
 # Drawbacks
 [drawbacks]: #drawbacks
 
@@ -394,10 +386,14 @@ Well, first, advertising of the option and its behaviour, as well as the forward
 
 The first two are probably enough, the third is a bandaid.
 
-### Expose `CARGO_TARGET_BASE_DIR` metadata
+### Providing backlinks
 
-`cargo` will use backlinks in an implementation-defined form to keep track in the `CARGO_TARGET_BASE_DIR` of the relation from a target directory to its source workspace.
+Backlinks are metadata in `CARGO_TARGET_BASE_DIR` that links target directories back to the workspace they came from.
 
-In the future, we could envisage letting external tools and users access this data in a well-defined form through `cargo metadata`.
+[`targo`][tg] uses them as a way to allow garbage collection to be added in the future.
+Garbage collection is being added to cargo
+([rust-lang/cargo#8415](https://github.com/rust-lang/cargo/issues/8415))
+and a form of a backlink in the sqlite database is being considered for [cargo script](https://github.com/rust-lang/rfcs/pull/3502).
+We leave the decision on how to whether and how to handle backlinks to the garbage collection project.
 
 [tg]: https://github.com/sunshowers/targo
