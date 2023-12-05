@@ -21,6 +21,7 @@ The original motivating issue can be found here: [rust-lang/cargo#11156](https:/
 1. Being able to easily exclude a directory from backups particularly low-effort means that don't support `CACHEDIR.TAG` (ZFS and btrfs snapshots, `rsync`, etc)
 1. Allows easily having separate directories for Rust-Analyzer and Cargo itself, allowing concurrent builds (technically already doable with arguments/env vars but `CARGO_TARGET_DIR` collides all projects into big target dir, leading to frequent recompilation because of conflicting features and locking builds)
 1. Allows using a different disk, partition or mount point for cargo artifacts
+  - e.g. [keeping `target/` in a tmpfs](https://github.com/rust-lang/cargo/issues/11887)
 1. Avoids having to set `CARGO_TARGET_DIR` for every project to get the same effect as proposed here
 
 # Guide-level explanation
