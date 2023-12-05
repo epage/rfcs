@@ -220,6 +220,8 @@ A mitigation for this is recommending a short prefix (in `CARGO_TARGET_BASE_DIR`
 
 There a few cases where a symlink instead of a real dir will break programs: at least SQLite 3 can be configured to raise an error if the database is behind a symlink anywhere in its opening path, it's probably other programs can also be configured to check this (or do it by default). Since `CARGO_TARGET_BASE_DIR` won't become a default in this RFC, we are not breaking any existing use cases.
 
+The symlink does add some extra clutter but the cost seems low.
+
 # Rationale and alternatives
 [rationale-and-alternatives]: #rationale-and-alternatives
 
@@ -257,6 +259,13 @@ There are already lots of discussion about `.cargo` and `.rustup` being home to 
 This require an hard-to-break naming scheme (a recent hash algorithm should be good enough in 99% of the cases but collisions are always possible), which is something the `cargo` team probably does not want to offer guarantees about. Instead, explicitely telling the naming scheme is not to be considered stable allows more invested people to experiment with the feature and find something solid if stability proves itself necessary.
 
 What's more, by explicitely not stabilizing it (and maybe voluntarily changing it between versions sometimes, since a version change recompiles everything anyway ?) `cargo` can instead reroute people and tools towards `CARGO_TARGET_DIR` / `cargo metadata` instead, which are much more likely to be suited to their use case if they need the path to the target directory.
+
+## Forward links
+
+Instead of providing symlinks, we could just say "what we have works"
+- `cargo metadata` includes the target directory and can be queried with `jq`
+
+As an extension, `cargo build` and related commands could output the absolute path to final artifacts
 
 ## Just use `targo`
 
