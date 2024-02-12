@@ -309,6 +309,11 @@ Downsides
 # Prior art
 [prior-art]: #prior-art
 
+## toml-cfg
+
+[toml-cfg](https://github.com/jamesmunns/toml-cfg) allows the end-user to
+control settings on packages in their dependency tree.
+
 ## Gentoo USE flags
 
 - [Top-level documentation](https://wiki.gentoo.org/wiki/USE_flag)
