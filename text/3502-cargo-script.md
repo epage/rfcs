@@ -586,12 +586,12 @@ Both extending `PATHEXT` and associating `cargo` as the interpreter could be per
 Given this setup, Rust scripts can be launched from `cmd.exe` or PowerShell like any other executable.
 Double-clicking in Windows Explorer will also run the script.
 
-Windows does not have an executable permission on files, thus it would be necessary to use a separate exetension for *executable* Rust file, for example `.rsc` (e.g. Rust SCript).
+Windows does not have an executable permission on files, thus it would be necessary to use a separate exetension for *executable* Rust files, for example `.rsc` (e.g. Rust SCript).
 This would prevent normal Rust source files (`.rs`) from being treated as executables and keep their existing file association and actions, which is most likely set to open in an editor or IDE for most users.
 
 ### Interaction with editors
 
-For the `PATHEXT` mechanism to work, the default action ([verb in Windows terminology](https://learn.microsoft.com/en-us/windows/win32/shell/fa-verbs) must be the interpreter, i.e. `cargo` in our case.
+For the `PATHEXT` mechanism to work, the default action ([verb in Windows terminology](https://learn.microsoft.com/en-us/windows/win32/shell/fa-verbs)) must be the interpreter, i.e. `cargo` in our case.
 We could add a secondary action ("verb") called "Edit" that opens the file in an editor.
 This is how the batch file type (`.bat`) is set up by default.
 
