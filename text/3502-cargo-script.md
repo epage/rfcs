@@ -627,6 +627,8 @@ If we adopted a unique file extensions, some options include:
   - Unwieldy
 - `.rspkg`
   - No connection back to cargo but conveys its a single-file package
+- `.rsx` with precedent set by `.csx` files that are `.cs` (C#) source files executable by the Roslyn engine used by .NET.
+  - No connection back to cargo
 
 ## Embedded Manifest Format
 
