@@ -577,12 +577,24 @@ This still leaves room for third-party implementations, either differentiating t
 - Short-hand dependency syntax (e.g. `//# serde_json = "*"`)
 - Prioritizing other workflows, like runtime performance
 
-## File association on Windows
+## File association and execution on Windows
 
-We could add a non-default association to run the file.
-We don't want it to be a default,
-to avoid unintended harm and due to the likelihood someone is going to want to
-edit these files.
+Windows uses the `PATHEXT` environment variable to specify which file extensions are executable.
+The corresponding interpreter is looked up from the registry, which can either be modified directly or through `cmd.exe` commands.
+Microsoft provides an example on [how to associate `.pl` files with the Perl interpreter](https://learn.microsoft.com/en-us/windows-server/administration/windows-commands/ftype).
+Both extending `PATHEXT` and associating `cargo` as the interpreter could be performed by `rustup` during installation.
+
+Given this setup, Rust scripts can be launched from `cmd.exe` or PowerShell like any other executable.
+Double-clicking in Windows Explorer will also run the script.
+
+Windows does not have an executable permission on files, thus it would be necessary to use a separate exetension for *executable* Rust files, for example `.rsc` (e.g. Rust SCript).
+This would prevent normal Rust source files (`.rs`) from being treated as executables and keep their existing file association and actions, which is most likely set to open in an editor or IDE for most users.
+
+### Interaction with editors
+
+For the `PATHEXT` mechanism to work, the default action ([verb in Windows terminology](https://learn.microsoft.com/en-us/windows/win32/shell/fa-verbs)) must be the interpreter, i.e. `cargo` in our case.
+We could add a secondary action ("verb") called "Edit" that opens the file in an editor.
+This is how the batch file type (`.bat`) is set up by default.
 
 ## File extension
 
@@ -594,6 +606,7 @@ Reasons for a unique file type
     so this doesn't seem too far off
 - Different file associations for Windows
 - Better detection by tools for the new semantics (particularly `rust-analyzer`)
+- Windows has no executable permission and can only differentiate by extension
 
 Downsides to a custom extension
 - Limited support by different tools (rust-analyzer, syntax highlighting, non-LSP editor actions) as adoption rolls out
@@ -601,12 +614,7 @@ Downsides to a custom extension
 At this time, we do not see enough reason to use a custom extension when facing
 the downsides to a slow roll out.
 
-For Windows, a different file extension doesn't buy us all that much.
-We could have a "run" action associated with the extension when clicking on the
-file but the most likely action people would want is to edit, not run, and
-there might be concern over running code unexpectedly.
-More interesting is the commandline but we do not know of a accepted equivalent of `#!` for `cmd`.
-Generally, users just reference the interpreter (`python x.py`) or add a `x.bat` wrapper.
+However, for Windows, a different file extension is important as described above.
 
 While `rust-analyzer` needs to be able to distinguish regular `.rs` files from
 single-file packages to look up the relevant manifest to perform operations, we
@@ -622,6 +630,7 @@ If we adopted a unique file extensions, some options include:
 - `.rss`
   - No connection back to cargo
   - Confused with [RSS](https://en.wikipedia.org/wiki/RSS)
+- `.rsc` (Rust SCript)
 - `.rsscript`
   - No connection back to cargo
   - Unwieldy
