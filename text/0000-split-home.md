@@ -165,6 +165,8 @@ based on the above migration script.
 
 Each of these new environment variables will be blocked from being set in [`config.toml`s `[env]` table](https://doc.rust-lang.org/cargo/reference/config.html#env).
 
+When discovering a workspace root, `CARGO_CACHE_HOME` will be treated as a stop-path, like `CARGO_HOME`
+
 # Drawbacks
 [drawbacks]: #drawbacks
 
